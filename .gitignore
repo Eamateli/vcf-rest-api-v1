@@ -1,3 +1,27 @@
+# virtualenvs
 /venv
+/.venv
+/env
+
+# the real VCF stays out; the test fixture goes in
 *.vcf
-db.sqlite3
+!data/sample.vcf
+
+# secrets
+.env
+
+# python
+__pycache__/
+*.py[cod]
+
+# test + tooling caches
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+.mypy_cache/
+
+# editors / os
+.idea/
+.vscode/
+.DS_Store
