@@ -71,3 +71,13 @@ def parse_line(line: str) -> Variant:
         alt=alt,
         source_line=source_line,
     )
+
+
+def line_id(line: str) -> str | None:
+    """The ID column of a data row, or None for meta lines, blanks and '.'."""
+    if line.startswith(COMMENT_PREFIX) or not line.strip():
+        return None
+    fields = line.split("\t")
+    if len(fields) < MIN_COLUMNS:
+        return None
+    return None if fields[2] == MISSING else fields[2]
