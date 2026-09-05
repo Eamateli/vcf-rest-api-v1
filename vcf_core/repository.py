@@ -4,7 +4,9 @@ from pathlib import Path
 
 from vcf_core.models import Variant
 from vcf_core.pagination import DEFAULT_LIMIT, Page, paginate
-from vcf_core.parser import iter_data_lines, iter_variants, parse_line, read_column_names
+from vcf_core.parser import MISSING, iter_data_lines, iter_variants, parse_line, read_column_names
+from vcf_core.storage import append_line, file_lock
+from vcf_core.validation import validate_variant
 
 
 class VcfRepository:
@@ -30,3 +32,17 @@ class VcfRepository:
     def column_count(self) -> int:
         """How many columns this file's #CHROM header declares."""
         return len(read_column_names(self.path))
+        
+    def append(self, chrom: str, pos: int, variant_id: str, ref: str, alt: str) -> Variant:
+        """Validate and append one row, padded out to this file's column count."""
+        validate_variant(chrom, pos, variant_id, ref, alt)
+
+        with file_lock(self.path):
+            column_count = len(read_column_names(self.path))
+            fields = [chrom, str(pos), variant_id, ref, alt]
+            fields += [MISSING] * max(0, column_count - len(fields))
+            line = "\t".join(fields)
+            append_line(self.path, line)
+
+        return parse_line(line)
+   
