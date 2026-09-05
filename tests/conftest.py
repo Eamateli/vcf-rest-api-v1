@@ -1,7 +1,7 @@
 """Shared fixtures. Every test builds its own VCF; none touch data/sample.vcf."""
 
 from pathlib import Path
-
+from rest_framework.test import APIClient
 import pytest
 
 META = "##fileformat=VCFv4.2"
@@ -22,3 +22,10 @@ def vcf_path(tmp_path: Path) -> Path:
     path = tmp_path / "test.vcf"
     path.write_text("\n".join([META, HEADER, *ROWS]) + "\n")
     return path
+
+@pytest.fixture
+def api_client(settings, vcf_path: Path) -> APIClient:
+    """A client whose API is pointed at this test's own throwaway VCF."""
+    settings.VCF_PATH = vcf_path
+    settings.ALLOWED_HOSTS = ["testserver"]
+    return APIClient()
