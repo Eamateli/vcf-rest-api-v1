@@ -27,6 +27,8 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+# Which VCF file this API serves. Any file, supplied at startup.
+VCF_PATH = Path(os.environ.get("VCF_PATH", BASE_DIR / "data" / "sample.vcf"))
 
 
 # Quick-start development settings - unsuitable for production
