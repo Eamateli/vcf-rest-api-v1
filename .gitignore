@@ -13,6 +13,7 @@
 # python
 __pycache__/
 *.py[cod]
+*.egg-info/
 
 # test + tooling caches
 .pytest_cache/
