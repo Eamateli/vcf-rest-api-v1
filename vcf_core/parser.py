@@ -23,11 +23,18 @@ def read_column_names(path: Path) -> list[str]:
 
 def iter_variants(path: Path) -> Iterator[Variant]:
     """Yield one Variant per data row, reading the file lazily."""
+    seen_header = False
     with path.open() as handle:
         for line in handle:
+            if line.startswith(COLUMN_HEADER_PREFIX):
+                seen_header = True
+                continue
             if line.startswith(COMMENT_PREFIX) or not line.strip():
                 continue
+            if not seen_header:
+                raise MalformedVcfError(f"data row before the #CHROM header in {path}")
             yield parse_line(line)
+
 
 
 def parse_line(line: str) -> Variant:
