@@ -24,9 +24,27 @@ def vcf_path(tmp_path: Path) -> Path:
     path.write_text("\n".join([META, HEADER, *ROWS]) + "\n")
     return path
 
+TEST_SECRET = "test-secret-value"
+
+
 @pytest.fixture
-def api_client(settings, vcf_path: Path) -> APIClient:
+def audit_path(tmp_path: Path) -> Path:
+    """Where this test's audit entries land."""
+    return tmp_path / "audit.jsonl"
+
+
+@pytest.fixture
+def api_client(settings, vcf_path: Path, audit_path: Path) -> APIClient:
     """A client whose API is pointed at this test's own throwaway VCF."""
     settings.VCF_PATH = vcf_path
+    settings.AUDIT_LOG_PATH = audit_path
+    settings.VCF_API_SECRET = TEST_SECRET
     settings.ALLOWED_HOSTS = ["testserver"]
     return APIClient()
+
+
+@pytest.fixture
+def writer_client(api_client: APIClient) -> APIClient:
+    """The same client, carrying a valid write secret."""
+    api_client.credentials(HTTP_AUTHORIZATION=TEST_SECRET)
+    return api_client

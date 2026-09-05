@@ -3,7 +3,7 @@
 import pytest
 
 from vcf_core.errors import MalformedVcfError
-from vcf_core.parser import iter_variants, parse_line, read_column_names
+from vcf_core.parser import iter_variants, line_id, parse_line, read_column_names
 
 SAMPLE_ROW = "chr1\t12783\trs62635284\tG\tA\t99.03\tFAIL\tAC=2\tGT:DP\t1/1:4"
 
@@ -77,3 +77,21 @@ def test_iter_variants_raises_when_a_data_row_precedes_the_header(tmp_path):
     path.write_text("##fileformat=VCFv4.2\nchr1\t100\trs1\tG\tA\n")
     with pytest.raises(MalformedVcfError):
         list(iter_variants(path))
+
+
+def test_line_id_ignores_a_truncated_row():
+    """A row with too few columns has no ID to read."""
+    assert line_id("chr1\t100") is None
+
+
+def test_line_id_reports_none_for_a_dot():
+    assert line_id("chr1\t100\t.\tG\tA") is None
+
+
+def test_line_id_reads_the_third_column():
+    assert line_id("chr1\t100\trs1\tG\tA") == "rs1"
+
+
+def test_line_id_ignores_meta_and_header_lines():
+    assert line_id("##fileformat=VCFv4.2") is None
+    assert line_id("#CHROM\tPOS\tID\tREF\tALT") is None
