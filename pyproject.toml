@@ -1,0 +1,33 @@
+[project]
+name = "vcf-rest-api"
+version = "0.1.0"
+description = "A REST API over a VCF file"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=6.1",
+    "djangorestframework>=3.18",
+    "python-dotenv>=1.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-django",
+    "pytest-cov",
+    "ruff",
+    "mypy",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["api", "config", "vcf_core"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
