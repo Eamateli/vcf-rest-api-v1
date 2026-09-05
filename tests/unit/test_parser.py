@@ -1,0 +1,48 @@
+"""Unit tests for vcf_core.parser."""
+
+import pytest
+
+from vcf_core.errors import MalformedVcfError
+from vcf_core.parser import parse_line
+
+SAMPLE_ROW = "chr1\t12783\trs62635284\tG\tA\t99.03\tFAIL\tAC=2\tGT:DP\t1/1:4"
+
+
+def test_parse_line_extracts_the_five_api_fields():
+    variant = parse_line(SAMPLE_ROW)
+    assert variant.chrom == "chr1"
+    assert variant.pos == 12783
+    assert variant.id == "rs62635284"
+    assert variant.ref == "G"
+    assert variant.alt == "A"
+
+
+def test_parse_line_converts_a_dot_id_to_none():
+    variant = parse_line("chr1\t62186\t.\tG\tT\t62.74\tFAIL\t.\t.\t.")
+    assert variant.id is None
+
+
+def test_parse_line_keeps_the_source_line_verbatim():
+    variant = parse_line(SAMPLE_ROW + "\n")
+    assert variant.source_line == SAMPLE_ROW
+
+
+def test_parse_line_keeps_multi_base_alleles_for_indels():
+    variant = parse_line("chr1\t13656\trs1263393206\tCAG\tC\t196.73\tPASS\t.\t.\t.")
+    assert variant.ref == "CAG"
+    assert variant.alt == "C"
+
+
+def test_parse_line_accepts_scaffold_chromosomes():
+    variant = parse_line("chrUn_gl000225\t1200\t.\tA\tT\t66.33\tFAIL\t.\t.\t.")
+    assert variant.chrom == "chrUn_gl000225"
+
+
+def test_parse_line_raises_when_there_are_fewer_than_five_columns():
+    with pytest.raises(MalformedVcfError):
+        parse_line("chr1\t12783\trs1")
+
+
+def test_parse_line_raises_when_pos_is_not_an_integer():
+    with pytest.raises(MalformedVcfError):
+        parse_line("chr1\tnot_a_number\trs1\tG\tA")
