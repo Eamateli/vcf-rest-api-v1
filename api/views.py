@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 
 from api.etag import compute_etag
 from api.pagination import paginated_response_body
+from api.permissions import HasWriteSecret
 from api.serializers import VariantSerializer
 from vcf_core.pagination import DEFAULT_LIMIT
 from vcf_core.repository import VcfRepository
@@ -30,6 +31,8 @@ def _pagination_params(request: Request) -> tuple[int, int]:
 
 class VariantListView(APIView):
     """GET /variants - a page of variants, or the rows matching ?id=."""
+
+    permission_classes = [HasWriteSecret]
 
     def get(self, request: Request) -> Response:
         etag = compute_etag(request, request.accepted_media_type)
