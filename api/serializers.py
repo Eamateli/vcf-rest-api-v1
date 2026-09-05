@@ -11,3 +11,12 @@ class VariantSerializer(serializers.Serializer):
     ID = serializers.CharField(source="id", allow_null=True)
     REF = serializers.CharField(source="ref")
     ALT = serializers.CharField(source="alt")
+
+class VariantWriteSerializer(serializers.Serializer):
+    """Shape of an incoming variant. Domain rules live in vcf_core.validation."""
+
+    CHROM = serializers.CharField()
+    POS = serializers.IntegerField()
+    ID = serializers.CharField()
+    REF = serializers.CharField()
+    ALT = serializers.CharField()

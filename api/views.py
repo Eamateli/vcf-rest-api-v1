@@ -2,7 +2,7 @@
 
 from django.conf import settings
 from rest_framework import status
-from rest_framework.exceptions import NotFound, ParseError
+from rest_framework.exceptions import NotFound, ParseError, ValidationError
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -10,7 +10,8 @@ from rest_framework.views import APIView
 from api.etag import compute_etag
 from api.pagination import paginated_response_body
 from api.permissions import HasWriteSecret
-from api.serializers import VariantSerializer
+from api.serializers import VariantSerializer, VariantWriteSerializer
+from vcf_core.errors import ValidationError as DomainValidationError
 from vcf_core.pagination import DEFAULT_LIMIT
 from vcf_core.repository import VcfRepository
 
@@ -51,6 +52,26 @@ class VariantListView(APIView):
 
         response["ETag"] = etag
         return response
+
+    def post(self, request: Request) -> Response:
+        payload = VariantWriteSerializer(data=request.data)
+        payload.is_valid(raise_exception=True)
+        fields = payload.validated_data
+
+        repository = VcfRepository(settings.VCF_PATH)
+        try:
+            variant = repository.append(
+                chrom=fields["CHROM"],
+                pos=fields["POS"],
+                variant_id=fields["ID"],
+                ref=fields["REF"],
+                alt=fields["ALT"],
+            )
+        except DomainValidationError as exc:
+            raise ValidationError(str(exc)) from exc
+
+        return Response(VariantSerializer(variant).data, status=status.HTTP_201_CREATED)
+
 
 
     def _matching_id(self, repository: VcfRepository, variant_id: str) -> Response:
