@@ -7,3 +7,7 @@ class VcfError(Exception):
 
 class MalformedVcfError(VcfError):
     """A line or header does not match the VCF structure."""
+
+class ValidationError(VcfError):
+    """A field failed the write validation rules."""
+
