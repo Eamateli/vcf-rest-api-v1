@@ -21,8 +21,8 @@ def read_column_names(path: Path) -> list[str]:
     raise MalformedVcfError(f"no #CHROM header line found in {path}")
 
 
-def iter_variants(path: Path) -> Iterator[Variant]:
-    """Yield one Variant per data row, reading the file lazily."""
+def iter_data_lines(path: Path) -> Iterator[str]:
+    """Yield the raw text of each data row, skipping meta and header lines."""
     seen_header = False
     with path.open() as handle:
         for line in handle:
@@ -33,8 +33,13 @@ def iter_variants(path: Path) -> Iterator[Variant]:
                 continue
             if not seen_header:
                 raise MalformedVcfError(f"data row before the #CHROM header in {path}")
-            yield parse_line(line)
+            yield line
 
+
+def iter_variants(path: Path) -> Iterator[Variant]:
+    """Yield one Variant per data row, reading the file lazily."""
+    for line in iter_data_lines(path):
+        yield parse_line(line)
 
 
 def parse_line(line: str) -> Variant:
