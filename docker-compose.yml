@@ -1,0 +1,16 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me}
+      VCF_API_SECRET: ${VCF_API_SECRET:-dev-write-secret}
+      DEBUG: ${DEBUG:-True}
+      ALLOWED_HOSTS: 127.0.0.1,localhost,0.0.0.0
+      # Point this at your own VCF and mount it below.
+      VCF_PATH: ${VCF_PATH:-data/sample.vcf}
+      AUDIT_LOG_PATH: /app/data/audit.jsonl
+    volumes:
+      # Mount your own VCF here, then set VCF_PATH to /app/data/<filename>.
+      - ./data:/app/data

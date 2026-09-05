@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    env:
+      # No .env in CI. These are throwaway values; the real secret never leaves the host.
+      SECRET_KEY: ci-secret-not-used-outside-ci
+      VCF_API_SECRET: ci-write-secret
+      DEBUG: "False"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Type-check the domain layer
+        run: mypy vcf_core
+
+      - name: Test with coverage
+        run: pytest --cov --cov-report=term-missing
