@@ -40,7 +40,7 @@ class VariantListView(APIView):
         if request.headers.get("If-None-Match") == etag:
             return Response(status=status.HTTP_304_NOT_MODIFIED)
 
-        repository = VcfRepository(settings.VCF_PATH)
+        repository = VcfRepository(settings.VCF_PATH, settings.AUDIT_LOG_PATH)
         variant_id = request.query_params.get("id")
 
         if variant_id is not None:
@@ -58,7 +58,7 @@ class VariantListView(APIView):
         payload.is_valid(raise_exception=True)
         fields = payload.validated_data
 
-        repository = VcfRepository(settings.VCF_PATH)
+        repository = VcfRepository(settings.VCF_PATH, settings.AUDIT_LOG_PATH)
         try:
             variant = repository.append(
                 chrom=fields["CHROM"],
@@ -83,7 +83,7 @@ class VariantListView(APIView):
         payload.is_valid(raise_exception=True)
         fields = payload.validated_data
 
-        repository = VcfRepository(settings.VCF_PATH)
+        repository = VcfRepository(settings.VCF_PATH, settings.AUDIT_LOG_PATH)
         try:
             changed = repository.update(
                 variant_id,
@@ -106,7 +106,7 @@ class VariantListView(APIView):
         if variant_id is None:
             raise ParseError("The id query parameter is required.")
 
-        repository = VcfRepository(settings.VCF_PATH)
+        repository = VcfRepository(settings.VCF_PATH, settings.AUDIT_LOG_PATH)
         removed = repository.delete(variant_id)
 
         if not removed:

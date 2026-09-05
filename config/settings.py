@@ -29,6 +29,9 @@ DEBUG = os.environ.get("DEBUG", "False") == "True"
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 # Which VCF file this API serves. Any file, supplied at startup.
 VCF_PATH = Path(os.environ.get("VCF_PATH", BASE_DIR / "data" / "sample.vcf"))
+
+# Append-only record of every mutation. Contains variant data, so it is gitignored.
+AUDIT_LOG_PATH = Path(os.environ.get("AUDIT_LOG_PATH", VCF_PATH.parent / "audit.jsonl"))
 # Shared secret for write requests. Empty means writes are refused entirely.
 VCF_API_SECRET = os.environ.get("VCF_API_SECRET", "")
 # The brief derives the ETag from request parameters only, which can serve a stale

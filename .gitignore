@@ -30,3 +30,5 @@ htmlcov/
 # advisory lock sidecars
 *.vcf.lock
 
+# audit log - contains variant data
+*.jsonl
