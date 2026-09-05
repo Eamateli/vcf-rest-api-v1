@@ -74,6 +74,33 @@ class VariantListView(APIView):
 
 
 
+    def put(self, request: Request) -> Response:
+        variant_id = request.query_params.get("id")
+        if variant_id is None:
+            raise ParseError("The id query parameter is required.")
+
+        payload = VariantWriteSerializer(data=request.data)
+        payload.is_valid(raise_exception=True)
+        fields = payload.validated_data
+
+        repository = VcfRepository(settings.VCF_PATH)
+        try:
+            changed = repository.update(
+                variant_id,
+                chrom=fields["CHROM"],
+                pos=fields["POS"],
+                new_id=fields["ID"],
+                ref=fields["REF"],
+                alt=fields["ALT"],
+            )
+        except DomainValidationError as exc:
+            raise ValidationError(str(exc)) from exc
+
+        if not changed:
+            raise NotFound(f"No variant matches id {variant_id!r}.")
+
+        return Response({"updated": changed})
+
     def _matching_id(self, repository: VcfRepository, variant_id: str) -> Response:
         """Every row with this ID, or 404 when none match."""
         matches = repository.find_by_id(variant_id)
