@@ -1,9 +1,12 @@
 # VCF REST API
 
-A REST API over a VCF (Variant Call Format) file. The file itself is the source of truth —
-there is no database.
+A REST API over a VCF (Variant Call Format) file.
 
-Django 6.1 + Django REST Framework 3.18, Python 3.12.
+Stack;
+Python 3.12.
+Django 6.1 
+Django REST Framework 3.18
+
 
 ---
 
@@ -28,8 +31,8 @@ python manage.py runserver
 curl -s "http://127.0.0.1:8000/variants?limit=2"
 ```
 
-It runs against `data/sample.vcf` out of the box — a 50-row fixture, so there is nothing else
-to configure.
+It runs against `data/sample.vcf`a 50-row sample. Using the your own vcf file see below. 
+
 
 ### With Docker
 
@@ -61,11 +64,11 @@ One resource, four verbs.
 
 | Method | Request | Success | Failure |
 |---|---|---|---|
-| `GET` | `/variants?offset=0&limit=20` | `200` — page of variants with `next`/`previous` links | `400` bad parameters |
-| `GET` | `/variants?id=rs123` | `200` — every matching row | `404` no match |
-| `POST` | `/variants` + JSON body | `201` — the stored variant | `400` invalid, `403` bad secret |
-| `PUT` | `/variants?id=rs123` + JSON body | `200` — `{"updated": n}` | `400`, `403`, `404` |
-| `DELETE` | `/variants?id=rs123` | `204` — no body | `400`, `403`, `404` |
+| `GET` | `/variants?offset=0&limit=20` | `200`, a page of variants with `next`/`previous` links | `400` bad parameters |
+| `GET` | `/variants?id=rs123` | `200`, every matching row | `404` no match |
+| `POST` | `/variants` + JSON body | `201`, the stored variant | `400` invalid, `403` bad secret |
+| `PUT` | `/variants?id=rs123` + JSON body | `200`, `{"updated": n}` | `400`, `403`, `404` |
+| `DELETE` | `/variants?id=rs123` | `204`, no body | `400`, `403`, `404` |
 
 **Writes require a shared secret** in the `Authorization` header, matching `VCF_API_SECRET`.
 
@@ -76,6 +79,8 @@ curl -X POST "http://127.0.0.1:8000/variants" \
 ```
 
 ### Content negotiation
+
+Content negotiation is the client telling the server which format it wants, and the server picking from what it can produce.
 
 `Accept: application/json` or `application/xml`. Absent or `*/*` falls back to JSON. Anything
 else returns `406`.
@@ -98,21 +103,12 @@ curl -s -o /dev/null -w "%{http_code}\n" -H "If-None-Match: $ETAG" "http://127.0
 
 ## Design
 
-### No database
-
-The brief makes the VCF the source of truth, so `DATABASES = {}` and `django.contrib.admin`,
-`auth`, `contenttypes`, `sessions` and `messages` are all removed, along with the generated
-`models.py` and `migrations/`. A database would be a second copy of the data that disagrees
-with the file the moment either one is written.
-
-This has consequences worth knowing about: DRF's default `UNAUTHENTICATED_USER` is
-`django.contrib.auth.models.AnonymousUser`, which meant every request imported `auth` and
-returned a 500 until `REST_FRAMEWORK["UNAUTHENTICATED_USER"] = None` was set.
-
 ### Layered: `vcf_core` knows nothing about HTTP
 
+The code that understands VCF files is kept separate from the code that understands the web, so neither can break the other.
+
 ```
-vcf_core/   domain logic — parsing, validation, pagination, storage. Imports no Django.
+vcf_core/   domain logic: parsing, validation, pagination, storage. Imports no Django.
 api/        a thin DRF adapter. Turns HTTP into calls on vcf_core and back.
 config/     settings and URLs.
 ```
@@ -133,9 +129,9 @@ Applying the brief's rules on read would reject **6.11%** of Saphetor's own data
 
 | rule | rows in the supplied file it would reject |
 |---|---|
-| `CHROM` must be `chr1`–`chr22`, `X`, `Y`, `M` | 3.08% — unplaced scaffolds like `chrUn_gl000225` |
-| `REF` must be a single `A`/`C`/`G`/`T`/`.` | 6.11% — deletions such as `CAG → C` |
-| `ALT` must be a single base | 4.70% — insertions |
+| `CHROM` must be `chr1`–`chr22`, `X`, `Y`, `M` | 3.08%, unplaced scaffolds like `chrUn_gl000225` |
+| `REF` must be a single `A`/`C`/`G`/`T`/`.` | 6.11%, deletions such as `CAG → C` |
+| `ALT` must be a single base | 4.70%, insertions |
 | `ID` must be `rs<integer>` | 0.21% |
 
 So `tests/unit/test_parser.py` asserts `chrUn_gl000225` is **accepted** and
@@ -164,7 +160,7 @@ discard. Memory is constant at any file size.
 ### Safe writes
 
 Every mutation takes an advisory `fcntl.flock` on a sidecar `.vcf.lock` file. The lock lives on
-the sidecar rather than the VCF because `os.replace` gives the VCF a new inode — a lock held on
+the sidecar rather than the VCF because `os.replace` gives the VCF a new inode, so a lock held on
 the old file would protect nothing exactly when a rewrite is in flight.
 
 `PUT` and `DELETE` rewrite the file by building a temporary file in the same directory,
@@ -177,7 +173,7 @@ matched, so a 404 never rewrites 100 MB and never invalidates clients' caches.
 ### Audit log
 
 Not in the brief. In clinical genomics an unlogged change to a variant record is unacceptable,
-and a file-as-storage design has no history of its own — no git, no transaction log, and
+and a file-as-storage design has no history of its own: no git, no transaction log, and
 `os.replace` destroys the previous version completely.
 
 Every mutation appends one JSON object to `AUDIT_LOG_PATH`, inside the same lock, immediately
@@ -258,7 +254,7 @@ The first page reads 161 of 202,605 lines and stops.
 ## Known limitations
 
 **Offset pagination is O(n).** `islice` still has to walk the rows it skips, so cost grows with
-paging depth — 860× between page 1 and page 10,000 above. The fix is a byte-offset index built
+paging depth: 860 times between page 1 and page 10,000 above. The fix is a byte-offset index built
 at startup (~1.6 MB for 202k rows, then `f.seek()`), giving O(1) access. It is not built here
 because every write invalidates it, and that invalidation could not be tested properly in the
 time available. A production system would use that, a tabix index, or cursor pagination keyed on
@@ -271,7 +267,7 @@ asks for previous/next navigation, not a total.
 **The ETag can serve stale data.** The brief derives it from request parameters alone, so it
 cannot notice that the file changed: `GET` a page, `POST` a variant, re-request with
 `If-None-Match`, and you get a `304` with stale content. This is implemented as specified and
-both behaviours are tested — one test demonstrates the stale `304`, another proves it is gone
+both behaviours are tested. One test demonstrates the stale `304`, another proves it is gone
 with `ETAG_INCLUDE_FILE_MTIME=True`, which folds `os.stat().st_mtime_ns` into the hash.
 `stat` reads metadata, not content, so that still satisfies "do not read data from the VCF file".
 It is off by default because the brief says what it says. `mtime` has finite resolution, so two
@@ -316,7 +312,7 @@ tests/smoke/        the real 100 MB file, skipped when absent
 ```
 
 **No test reads or writes the real VCF or `data/sample.vcf`.** Every test builds its own file in
-`tmp_path` and points `settings.VCF_PATH` at it. The write tests append and delete rows — aimed
+`tmp_path` and points `settings.VCF_PATH` at it. The write tests append and delete rows. Aimed
 at a committed fixture they would corrupt it, and aimed at a real dataset they would corrupt
 that.
 
@@ -336,7 +332,7 @@ sample column name containing spaces, unplaced scaffolds like `chrUn_gl000225`, 
 `.` for ID, four deletions, four insertions, duplicate rs IDs, and the real file's maximum
 position. Every edge case that would break a naive parser is in there.
 
-The full suite was run against a copy of the supplied file before submission —
+The full suite was run against a copy of the supplied file before submission.
 `tests/smoke/test_real_vcf.py` is that check, kept in the repo so it can be repeated.
 
 ---
@@ -357,8 +353,8 @@ The full suite was run against a copy of the supplied file before submission —
 
 ## Not built, deliberately
 
-A database or ORM. Caching layers, Redis, queues. Async views — there is no I/O concurrency
+A database or ORM. Caching layers, Redis, queues. Async views, since there is no I/O concurrency
 benefit for a single locked file. Rate limiting or OAuth; the brief specifies one shared secret.
-Abstract base classes or plugin registries with a single implementation. A `.bak` restore — one
+Abstract base classes or plugin registries with a single implementation. A `.bak` restore, because one
 backup slot means the second write destroys the first, a copy per write on a 100 MB file is
 expensive, and atomic writes already prevent the truncation failure that motivates backups.
