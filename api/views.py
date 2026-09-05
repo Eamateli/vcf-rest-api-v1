@@ -101,6 +101,19 @@ class VariantListView(APIView):
 
         return Response({"updated": changed})
 
+    def delete(self, request: Request) -> Response:
+        variant_id = request.query_params.get("id")
+        if variant_id is None:
+            raise ParseError("The id query parameter is required.")
+
+        repository = VcfRepository(settings.VCF_PATH)
+        removed = repository.delete(variant_id)
+
+        if not removed:
+            raise NotFound(f"No variant matches id {variant_id!r}.")
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     def _matching_id(self, repository: VcfRepository, variant_id: str) -> Response:
         """Every row with this ID, or 404 when none match."""
         matches = repository.find_by_id(variant_id)

@@ -73,6 +73,17 @@ class VcfRepository:
 
         return matched
 
+    def delete(self, variant_id: str) -> int:
+        """Remove every row matching variant_id. Returns how many were removed."""
+        with file_lock(self.path):
+            matched = self._count_matching(variant_id)
+            if not matched:
+                return 0
+
+            replace_lines(self.path, self._without(variant_id))
+
+        return matched
+
     def _count_matching(self, variant_id: str) -> int:
         """How many rows carry this ID."""
         with self.path.open() as handle:
@@ -84,3 +95,11 @@ class VcfRepository:
             for line in handle:
                 stripped = line.rstrip("\n")
                 yield replacement if line_id(stripped) == variant_id else stripped
+
+    def _without(self, variant_id: str) -> Iterator[str]:
+        """Every line of the file except rows carrying this ID."""
+        with self.path.open() as handle:
+            for line in handle:
+                stripped = line.rstrip("\n")
+                if line_id(stripped) != variant_id:
+                    yield stripped
