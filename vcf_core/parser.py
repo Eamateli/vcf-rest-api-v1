@@ -1,10 +1,33 @@
 """Turn VCF text lines into Variant objects."""
 
+from collections.abc import Iterator
+from pathlib import Path
+
 from vcf_core.errors import MalformedVcfError
 from vcf_core.models import Variant
 
 MISSING = "."
 MIN_COLUMNS = 5
+COLUMN_HEADER_PREFIX = "#CHROM"
+COMMENT_PREFIX = "#"
+
+
+def read_column_names(path: Path) -> list[str]:
+    """Return the column names from the #CHROM header line."""
+    with path.open() as handle:
+        for line in handle:
+            if line.startswith(COLUMN_HEADER_PREFIX):
+                return line.rstrip("\n").split("\t")
+    raise MalformedVcfError(f"no #CHROM header line found in {path}")
+
+
+def iter_variants(path: Path) -> Iterator[Variant]:
+    """Yield one Variant per data row, reading the file lazily."""
+    with path.open() as handle:
+        for line in handle:
+            if line.startswith(COMMENT_PREFIX) or not line.strip():
+                continue
+            yield parse_line(line)
 
 
 def parse_line(line: str) -> Variant:
