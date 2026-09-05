@@ -1,11 +1,13 @@
 """HTTP endpoints. Translates requests into vcf_core calls and back."""
 
 from django.conf import settings
+from rest_framework import status
 from rest_framework.exceptions import NotFound, ParseError
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from api.etag import compute_etag
 from api.pagination import paginated_response_body
 from api.serializers import VariantSerializer
 from vcf_core.pagination import DEFAULT_LIMIT
@@ -30,15 +32,23 @@ class VariantListView(APIView):
     """GET /variants - a page of variants, or the rows matching ?id=."""
 
     def get(self, request: Request) -> Response:
+        etag = compute_etag(request, request.accepted_media_type)
+        if request.headers.get("If-None-Match") == etag:
+            return Response(status=status.HTTP_304_NOT_MODIFIED)
+
         repository = VcfRepository(settings.VCF_PATH)
-
         variant_id = request.query_params.get("id")
-        if variant_id is not None:
-            return self._matching_id(repository, variant_id)
 
-        offset, limit = _pagination_params(request)
-        page = repository.list_variants(offset=offset, limit=limit)
-        return Response(paginated_response_body(page, request))
+        if variant_id is not None:
+            response = self._matching_id(repository, variant_id)
+        else:
+            offset, limit = _pagination_params(request)
+            page = repository.list_variants(offset=offset, limit=limit)
+            response = Response(paginated_response_body(page, request))
+
+        response["ETag"] = etag
+        return response
+
 
     def _matching_id(self, repository: VcfRepository, variant_id: str) -> Response:
         """Every row with this ID, or 404 when none match."""

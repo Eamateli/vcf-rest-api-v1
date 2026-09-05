@@ -29,6 +29,9 @@ DEBUG = os.environ.get("DEBUG", "False") == "True"
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 # Which VCF file this API serves. Any file, supplied at startup.
 VCF_PATH = Path(os.environ.get("VCF_PATH", BASE_DIR / "data" / "sample.vcf"))
+# The brief derives the ETag from request parameters only, which can serve a stale
+# 304 after a write. Enable this to fold the VCF's mtime into the fingerprint.
+ETAG_INCLUDE_FILE_MTIME = os.environ.get("ETAG_INCLUDE_FILE_MTIME", "False") == "True"
 
 
 # Quick-start development settings - unsuitable for production
