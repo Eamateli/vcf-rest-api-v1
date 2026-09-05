@@ -3,10 +3,7 @@
 import pytest
 
 from vcf_core.errors import MalformedVcfError
-from vcf_core.parser import parse_line
-
 from vcf_core.parser import iter_variants, parse_line, read_column_names
-
 
 SAMPLE_ROW = "chr1\t12783\trs62635284\tG\tA\t99.03\tFAIL\tAC=2\tGT:DP\t1/1:4"
 
