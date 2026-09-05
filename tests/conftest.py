@@ -1,8 +1,9 @@
 """Shared fixtures. Every test builds its own VCF; none touch data/sample.vcf."""
 
 from pathlib import Path
-from rest_framework.test import APIClient
+
 import pytest
+from rest_framework.test import APIClient
 
 META = "##fileformat=VCFv4.2"
 HEADER = "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE01 single 20180302"
