@@ -153,7 +153,7 @@ a row from parsed fields. Rebuilding would silently delete QUAL, FILTER, INFO, F
 sample genotype from every row it touched.
 
 `tests/unit/test_round_trip.py` reads the file, writes it back and asserts the bytes are
-identical. `tests/smoke/` runs the same assertion over the real 202,463-row file.
+identical. `tests/smoke/` runs the same assertion over the real 202,464-row file.
 
 ### Streaming, never slurping
 
@@ -240,7 +240,7 @@ written.
 
 ## Measured performance
 
-On the supplied 100 MB, 202,604-line file:
+On the supplied 100 MB, 202,605-line file:
 
 | request | time |
 |---|---|
@@ -251,7 +251,7 @@ On the supplied 100 MB, 202,604-line file:
 | `?id=rs...` (full scan) | 367 ms |
 | `304` cache hit | no file access at all |
 
-The first page reads 161 of 202,604 lines and stops.
+The first page reads 161 of 202,605 lines and stops.
 
 ---
 
