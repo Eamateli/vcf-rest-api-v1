@@ -1,0 +1,24 @@
+"""Shared fixtures. Every test builds its own VCF; none touch data/sample.vcf."""
+
+from pathlib import Path
+
+import pytest
+
+META = "##fileformat=VCFv4.2"
+HEADER = "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE01 single 20180302"
+ROWS = [
+    "chr1\t12783\trs62635284\tG\tA\t99.03\tFAIL\tAC=2\tGT:DP\t1/1:4",
+    "chr1\t13656\trs1263393206\tCAG\tC\t196.73\tPASS\tAC=1\tGT:DP\t0/1:12",
+    "chr1\t62186\t.\tG\tT\t62.74\tFAIL\tAC=2\tGT:DP\t1/1:2",
+    "chr2\t41522\trs4000001\tA\tG\t410.55\tPASS\tAC=1\tGT:DP\t0/1:31",
+    "chr3\t88234\trs4000001\tG\tA\t155.09\tPASS\tAC=1\tGT:DP\t0/1:14",
+    "chrUn_gl000225\t1200\t.\tA\tT\t66.33\tFAIL\tAC=1\tGT:DP\t0/1:8",
+]
+
+
+@pytest.fixture
+def vcf_path(tmp_path: Path) -> Path:
+    """A small VCF in a temporary directory, unique to each test."""
+    path = tmp_path / "test.vcf"
+    path.write_text("\n".join([META, HEADER, *ROWS]) + "\n")
+    return path

@@ -5,6 +5,9 @@ import pytest
 from vcf_core.errors import MalformedVcfError
 from vcf_core.parser import parse_line
 
+from vcf_core.parser import iter_variants, parse_line, read_column_names
+
+
 SAMPLE_ROW = "chr1\t12783\trs62635284\tG\tA\t99.03\tFAIL\tAC=2\tGT:DP\t1/1:4"
 
 
@@ -46,3 +49,34 @@ def test_parse_line_raises_when_there_are_fewer_than_five_columns():
 def test_parse_line_raises_when_pos_is_not_an_integer():
     with pytest.raises(MalformedVcfError):
         parse_line("chr1\tnot_a_number\trs1\tG\tA")
+
+def test_iter_variants_yields_one_variant_per_data_row(vcf_path):
+    assert len(list(iter_variants(vcf_path))) == 6
+
+
+def test_iter_variants_skips_meta_and_header_lines(vcf_path):
+    chroms = [variant.chrom for variant in iter_variants(vcf_path)]
+    assert "#CHROM" not in chroms
+    assert "##fileformat=VCFv4.2" not in chroms
+
+
+def test_read_column_names_returns_every_column_in_the_header(vcf_path):
+    assert len(read_column_names(vcf_path)) == 10
+
+
+def test_read_column_names_keeps_a_sample_name_containing_spaces(vcf_path):
+    assert read_column_names(vcf_path)[-1] == "SAMPLE01 single 20180302"
+
+
+def test_read_column_names_raises_when_the_header_is_missing(tmp_path):
+    path = tmp_path / "noheader.vcf"
+    path.write_text("##fileformat=VCFv4.2\n")
+    with pytest.raises(MalformedVcfError):
+        read_column_names(path)
+
+
+def test_iter_variants_raises_when_a_data_row_precedes_the_header(tmp_path):
+    path = tmp_path / "noheader.vcf"
+    path.write_text("##fileformat=VCFv4.2\nchr1\t100\trs1\tG\tA\n")
+    with pytest.raises(MalformedVcfError):
+        list(iter_variants(path))
