@@ -353,6 +353,10 @@ The full suite was run against a copy of the supplied file before submission.
 
 ## Not built, deliberately
 
+Why there is no database, and what the schema would be if there were, is in
+[docs/if-this-were-a-database.md](docs/if-this-were-a-database.md).
+
+
 A database or ORM. Caching layers, Redis, queues. Async views, since there is no I/O concurrency
 benefit for a single locked file. Rate limiting or OAuth; the brief specifies one shared secret.
 Abstract base classes or plugin registries with a single implementation. A `.bak` restore, because one
