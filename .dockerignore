@@ -1,0 +1,26 @@
+# Build context only needs source. Keep the big and the local out.
+venv/
+.venv/
+.git/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# The real VCF is 100 MB and is mounted as a volume, never baked into the image.
+data/*.vcf
+!data/sample.vcf
+*.vcf.lock
+*.jsonl
+
+.env
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+tests/
+
+# Local working files, never in an image
+CLAUDE.md
+DECISIONS.md
+_prep/
