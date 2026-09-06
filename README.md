@@ -2,11 +2,11 @@
 
 A REST API over a VCF (Variant Call Format) file.
 
-Stack;
-Python 3.12.
-Django 6.1 
-Django REST Framework 3.18
+**Stack**
 
+- Python 3.12
+- Django 6.1
+- Django REST Framework 3.18
 
 ---
 
@@ -31,8 +31,8 @@ python manage.py runserver
 curl -s "http://127.0.0.1:8000/variants?limit=2"
 ```
 
-It runs against `data/sample.vcf`a 50-row sample. Using the your own vcf file see below. 
-
+It runs against `data/sample.vcf`, a 50-row sample, so there is nothing to configure. To use
+your own VCF, see below.
 
 ### With Docker
 
@@ -355,7 +355,6 @@ The full suite was run against a copy of the supplied file before submission.
 
 Why there is no database, and what the schema would be if there were, is in
 [docs/if-this-were-a-database.md](docs/if-this-were-a-database.md).
-
 
 A database or ORM. Caching layers, Redis, queues. Async views, since there is no I/O concurrency
 benefit for a single locked file. Rate limiting or OAuth; the brief specifies one shared secret.
